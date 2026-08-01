@@ -1,11 +1,13 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
+
 from app.graph.state import AgentState
 
 # Placeholder Nodes raising NotImplementedError
 
+
 def parse_jd_node(state: AgentState) -> AgentState:
     """Parses Job Description document.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -14,7 +16,7 @@ def parse_jd_node(state: AgentState) -> AgentState:
 
 def load_resumes_node(state: AgentState) -> AgentState:
     """Loads all raw resumes from source directory paths.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -23,7 +25,7 @@ def load_resumes_node(state: AgentState) -> AgentState:
 
 def extract_candidate_node(state: AgentState) -> AgentState:
     """Parses resumes and extracts structured Candidate profiles.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -32,7 +34,7 @@ def extract_candidate_node(state: AgentState) -> AgentState:
 
 def embedding_generation_node(state: AgentState) -> AgentState:
     """Generates vector embeddings for candidate profile elements and JDs.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -41,7 +43,7 @@ def embedding_generation_node(state: AgentState) -> AgentState:
 
 def similarity_calculation_node(state: AgentState) -> AgentState:
     """Calculates vector cosine similarity between job and candidate embeddings.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -50,7 +52,7 @@ def similarity_calculation_node(state: AgentState) -> AgentState:
 
 def score_generation_node(state: AgentState) -> AgentState:
     """Computes structured breakdown scores for candidate matches.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -59,7 +61,7 @@ def score_generation_node(state: AgentState) -> AgentState:
 
 def reasoning_generation_node(state: AgentState) -> AgentState:
     """Invokes LLM to generate qualitative evaluation feedback.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -68,7 +70,7 @@ def reasoning_generation_node(state: AgentState) -> AgentState:
 
 def ranking_node(state: AgentState) -> AgentState:
     """Sorts evaluated candidates into ranked order.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """
@@ -77,7 +79,7 @@ def ranking_node(state: AgentState) -> AgentState:
 
 def export_node(state: AgentState) -> AgentState:
     """Saves output metrics into CSV, JSON, and text reports.
-    
+
     Raises:
         NotImplementedError: Business logic placeholder.
     """

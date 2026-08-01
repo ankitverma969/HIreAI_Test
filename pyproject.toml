@@ -1,11 +1,11 @@
 [tool.black]
 line-length = 88
-target-version = ['py312']
+target-version = ['py311']
 include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -20,7 +20,7 @@ select = [
     "A",   # flake8-builtins
     "T20", # flake8-print
 ]
-ignore = []
+ignore = ["E501", "N818"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,24 +1,26 @@
 import time
-from fastapi import FastAPI, Request, status
+from typing import Awaitable, Callable
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
 from app.api.router import router as api_router
 from app.core.config import settings
-from app.core.logging import setup_logging
 from app.core.exceptions import (
-    ResumeAgentException,
-    ValidationException,
-    ParsingException,
-    LLMException,
-    ScoringException,
     ExportException,
+    LLMException,
+    ParsingException,
+    ResumeAgentException,
+    ScoringException,
+    ValidationException,
 )
+from app.core.logging import setup_logging
+
 
 def create_app() -> FastAPI:
     """Application factory for the Resume Screening Agent FastAPI backend.
-    
+
     Returns:
         Configured FastAPI application instance.
     """
@@ -46,10 +48,12 @@ def create_app() -> FastAPI:
 
     # 4. Add Global Request/Response Logging Middleware
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         start_time = time.perf_counter()
         logger.debug(f"Received request: {request.method} {request.url.path}")
-        
+
         try:
             response = await call_next(request)
             process_time = time.perf_counter() - start_time
@@ -68,9 +72,11 @@ def create_app() -> FastAPI:
 
     # 5. Register Custom Exception Handlers mapping domain exceptions to HTTP Status codes
     @app.exception_handler(ResumeAgentException)
-    async def resume_agent_exception_handler(request: Request, exc: ResumeAgentException) -> JSONResponse:
+    async def resume_agent_exception_handler(
+        request: Request, exc: ResumeAgentException
+    ) -> JSONResponse:
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        
+
         if isinstance(exc, ValidationException):
             status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
         elif isinstance(exc, ParsingException):
@@ -88,14 +94,15 @@ def create_app() -> FastAPI:
             content={
                 "success": False,
                 "error_code": exc.__class__.__name__,
-                "detail": exc.message
-            }
+                "detail": exc.message,
+            },
         )
 
     # 6. Include Router endpoints
     app.include_router(api_router)
-    
+
     logger.info("Application startup check complete.")
     return app
+
 
 app = create_app()

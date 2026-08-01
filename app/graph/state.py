@@ -1,32 +1,34 @@
-from typing import TypedDict, List, Dict, Optional, Annotated
-import operator
-from app.models.job_description import JobDescription
-from app.models.candidate import Candidate
-from app.models.score import Score, Ranking
-from app.models.report import Report
+from typing import Annotated, TypedDict
 
-def merge_errors(left: List[str], right: List[str]) -> List[str]:
+from app.models.candidate import Candidate
+from app.models.job_description import JobDescription
+from app.models.report import Report
+from app.models.score import Ranking, Score
+
+
+def merge_errors(left: list[str], right: list[str]) -> list[str]:
     """Helper reducer function to aggregate processing errors."""
     return left + right
 
 
 class AgentState(TypedDict):
     """Workflow state schema traversed by LangGraph nodes."""
-    job_description_path: Optional[str]
-    resumes_paths: List[str]
-    
+
+    job_description_path: str | None
+    resumes_paths: list[str]
+
     # Processed states
-    job_description: Optional[JobDescription]
-    candidates: List[Candidate]
-    
+    job_description: JobDescription | None
+    candidates: list[Candidate]
+
     # Embedding values
-    jd_embedding: Optional[List[float]]
-    candidate_embeddings: Dict[str, List[float]]
-    
+    jd_embedding: list[float] | None
+    candidate_embeddings: dict[str, list[float]]
+
     # Scored results
-    scores: Dict[str, Score]
-    rankings: List[Ranking]
-    report: Optional[Report]
-    
+    scores: dict[str, Score]
+    rankings: list[Ranking]
+    report: Report | None
+
     # Reducer accumulator for execution issues
-    errors: Annotated[List[str], merge_errors]
+    errors: Annotated[list[str], merge_errors]
