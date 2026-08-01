@@ -30,9 +30,10 @@ export const Results = () => {
 
   // 1. Flatten rankings data structure for table sorting & searching
   const flatRankings = useMemo(() => {
+    if (!Array.isArray(rankings)) return [];
     return rankings.map((r) => {
       // Deduce recommendation decision category from reasoning text
-      const reason = (r.score.reasoning || '').toLowerCase();
+      const reason = (r?.score?.reasoning || '').toLowerCase();
       let rec = 'Consider';
       if (reason.includes('strong hire')) rec = 'Strong Hire';
       else if (reason.includes('reject')) rec = 'Reject';
@@ -45,12 +46,12 @@ export const Results = () => {
         candidate_id: r.candidate_id,
         candidate_name: r.candidate_name,
         rank: r.rank,
-        overall_score: r.score.overall_score,
-        skill_match: r.score.breakdown.skill_match,
-        experience_match: r.score.breakdown.experience_match,
-        education_match: r.score.breakdown.education_match,
-        semantic_similarity: r.score.breakdown.semantic_similarity,
-        confidence_score: r.score.confidence_score,
+        overall_score: r?.score?.overall_score ?? 0,
+        skill_match: r?.score?.breakdown?.skill_match ?? 0,
+        experience_match: r?.score?.breakdown?.experience_match ?? 0,
+        education_match: r?.score?.breakdown?.education_match ?? 0,
+        semantic_similarity: r?.score?.breakdown?.semantic_similarity ?? 0,
+        confidence_score: r?.score?.confidence_score ?? 0,
         recommendation: rec,
         score: r.score
       };
@@ -94,11 +95,11 @@ export const Results = () => {
 
   // Calculate statistics metrics
   const stats = useMemo(() => {
-    const total = rankings.length;
+    const total = Array.isArray(rankings) ? rankings.length : 0;
     if (!total) return { avg: 0, max: 0, strongCount: 0 };
 
-    const avg = Math.round(rankings.reduce((acc, c) => acc + c.score.overall_score, 0) / total);
-    const max = Math.max(...rankings.map((r) => r.score.overall_score));
+    const avg = Math.round((rankings.reduce((acc, c) => acc + (c?.score?.overall_score ?? 0), 0)) / total);
+    const max = Math.max(...rankings.map((r) => r?.score?.overall_score ?? 0));
     
     // Count Strong Hires
     const strongCount = flatRankings.filter(item => item.recommendation === 'Strong Hire').length;
