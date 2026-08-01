@@ -1,0 +1,265 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .toolbar {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select,
+.input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.input {
+  min-width: 220px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.statBox,
+.panel,
+.rowCard,
+.promptBody {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-glass);
+}
+
+.statBox {
+  padding: 18px;
+}
+
+.statValue {
+  color: var(--text-primary);
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.statLabel {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.panelTitle {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 992px) {
+  .gridTwo {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chartBox {
+  height: 300px;
+}
+
+.text {
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 8px;
+}
+
+.qualityGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.qualityItem {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 10px;
+}
+
+.qualityLabel {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.qualityValue {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rowCard {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 48px 1fr;
+  padding: 14px;
+}
+
+.order {
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  color: var(--text-primary);
+  display: flex;
+  font-weight: 800;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.rowHeader {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.rowTitle {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.promptLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .promptLayout {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promptButton {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 10px;
+  text-align: left;
+}
+
+.promptButtonActive {
+  border-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.promptBody {
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  max-height: 380px;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}

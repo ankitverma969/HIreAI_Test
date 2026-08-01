@@ -11,6 +11,15 @@ import {
   Processing,
   Results,
   CandidateDetails,
+  CandidateComparison,
+  RecruiterChat,
+  ExecutiveDashboard,
+  HiringInsights,
+  Reports,
+  Explainability,
+  AuditLogs,
+  ExecutionGraph,
+  PromptInspector,
   Analytics,
   Settings,
   NotFound,
@@ -30,6 +39,15 @@ function App() {
                   <Route path="/processing" element={<Processing />} />
                   <Route path="/results" element={<Results />} />
                   <Route path="/results/:candidateId" element={<CandidateDetails />} />
+                  <Route path="/compare" element={<CandidateComparison />} />
+                  <Route path="/chat" element={<RecruiterChat />} />
+                  <Route path="/executive" element={<ExecutiveDashboard />} />
+                  <Route path="/insights" element={<HiringInsights />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/explainability" element={<Explainability />} />
+                  <Route path="/audit" element={<AuditLogs />} />
+                  <Route path="/graph" element={<ExecutionGraph />} />
+                  <Route path="/prompts" element={<PromptInspector />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<NotFound />} />

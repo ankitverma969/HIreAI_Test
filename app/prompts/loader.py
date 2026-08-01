@@ -23,6 +23,27 @@ class PromptLoader:
             "5. Learning Recommendations: tailored study plans/course suggestions to bridge their technical gap.\n"
             "6. Hiring Summary: qualitative overview of their match alignment.\n"
             "7. Recommendation: one of 'Strong Hire', 'Hire', 'Consider', 'Review', 'Reject' based on their matching profile."
+        ),
+        "candidate_comparison": (
+            "You are an executive recruiting assistant. Compare only the existing candidate "
+            "screening results below. Do not calculate, infer, or alter scores. Explain why "
+            "the existing ranking favors one candidate over another using only the provided "
+            "JSON rows and highlights.\n\n"
+            "Candidate comparison rows:\n{comparison_rows}\n\n"
+            "Highlights:\n{highlights}\n\n"
+            "Return only structured JSON matching the required schema with these keys: "
+            "executive_comparison, why_ranked_higher, strength_comparison, risk_comparison, "
+            "interview_recommendation, hiring_recommendation."
+        ),
+        "executive_hiring_summary": (
+            "You are an executive hiring intelligence assistant. Use only the provided "
+            "analytics, rankings, and risk records. Do not calculate or change any scores. "
+            "Only summarize, prioritize, and explain the existing data.\n\n"
+            "Analytics JSON:\n{analytics}\n\n"
+            "Risk JSON rows:\n{risks}\n\n"
+            "Top ranking JSON rows:\n{rankings}\n\n"
+            "Return only structured JSON matching this schema: overall_hiring_summary, "
+            "hiring_risks, interview_priorities, overall_recommendation, executive_insights."
         )
     }
 

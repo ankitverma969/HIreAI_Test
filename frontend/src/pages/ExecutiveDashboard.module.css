@@ -1,0 +1,145 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.statBox,
+.panel,
+.candidateRow,
+.riskBox,
+.fitBox,
+.planBox {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-glass);
+}
+
+.statBox {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statValue {
+  color: var(--text-primary);
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.statLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.panelTitle {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.summaryText {
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 992px) {
+  .gridTwo {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.candidateList,
+.riskList,
+.fitList,
+.planList,
+.buttonRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.candidateRow,
+.riskBox,
+.fitBox,
+.planBox {
+  padding: 14px;
+}
+
+.rowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.name {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 5px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.chartBox {
+  height: 300px;
+}
+
+.buttonRow {
+  align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+  .buttonRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
