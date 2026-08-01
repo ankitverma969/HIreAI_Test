@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.models.candidate import CandidateProfile
+from app.models.candidate import Candidate
 from app.models.job_description import JobDescription
 from app.models.score import Score
 
@@ -9,7 +9,7 @@ class BaseCandidateScorer(ABC):
     """Abstract Base Class defining the resume ranking scoring interface."""
 
     @abstractmethod
-    def calculate_score(self, candidate: CandidateProfile, jd: JobDescription) -> Score:
+    def calculate_score(self, candidate: Candidate, jd: JobDescription) -> Score:
         """Calculates candidate matching scores against job requirements.
 
         Args:

@@ -20,7 +20,7 @@ select = [
     "A",   # flake8-builtins
     "T20", # flake8-print
 ]
-ignore = ["E501", "N818"]
+ignore = ["E501", "N818", "C901"]
 
 [tool.mypy]
 python_version = "3.12"
