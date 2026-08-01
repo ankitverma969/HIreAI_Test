@@ -70,6 +70,50 @@ export const ExecutionGraph = () => {
       </section>
 
       <section className={styles.panel}>
+        <h2 className={styles.panelTitle}>Execution Graph</h2>
+        <div className={styles.graphWrap}>
+          {/* Simple horizontal node-link SVG graph */}
+          <div className={styles.graphScroll}>
+            <svg
+              width={Math.max(800, graph.timeline.length * 180)}
+              height={160}
+              role="img"
+              aria-label="Execution graph"
+            >
+              {/* lines between nodes */}
+              {graph.timeline.map((step, i) => {
+                if (i === 0) return null;
+                const x1 = (i - 1) * 180 + 120;
+                const x2 = i * 180 + 40;
+                const y = 80;
+                return <line key={`link-${i}`} x1={x1} y1={y} x2={x2} y2={y} stroke="var(--border-color)" strokeWidth={2} markerEnd="url(#arrow)" />;
+              })}
+
+              <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L10,5 L0,10 z" fill="var(--primary-color)" />
+                </marker>
+              </defs>
+
+              {/* nodes */}
+              {graph.timeline.map((step, i) => {
+                const x = i * 180 + 40;
+                const y = 30;
+                const statusColor = step.status === 'success' ? '#10b981' : step.status === 'failed' ? '#ef4444' : '#f59e0b';
+                return (
+                  <g key={`node-${i}`} transform={`translate(${x}, ${y})`} style={{ cursor: 'pointer' }}>
+                    <rect x={0} y={0} rx={8} ry={8} width={160} height={72} fill="var(--bg-secondary)" stroke={statusColor} strokeWidth={2} />
+                    <text x={12} y={24} fontSize={12} fill="var(--text)" fontWeight={700}>{step.execution_order}. {step.name}</text>
+                    <text x={12} y={44} fontSize={11} fill="var(--text-muted)">{step.execution_time}s • in {step.input_size} • out {step.output_size}</text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.panel}>
         <h2 className={styles.panelTitle}>Execution Timeline</h2>
         <div className={styles.timeline}>
           {graph.timeline.map((step) => (
