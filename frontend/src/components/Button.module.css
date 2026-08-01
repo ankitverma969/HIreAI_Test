@@ -138,3 +138,24 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Last action status badge */
+.statusBadge {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+.statusSuccess {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(16,185,129,0.3);
+}
+
+.statusError {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(239,68,68,0.3);
+}
