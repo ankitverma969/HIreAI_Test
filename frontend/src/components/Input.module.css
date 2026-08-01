@@ -1,3 +1,7 @@
+/* ============================================================
+   Input — Premium Form Field
+   ============================================================ */
+
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -6,32 +10,49 @@
 }
 
 .label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input {
   width: 100%;
-  padding: 10px 16px;
+  padding: 11px 16px;
   border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
-  background-color: var(--bg-glass);
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
   color: var(--text-primary);
   font-size: 0.9rem;
   outline: none;
   transition: var(--transition-smooth);
+  line-height: 1.4;
+}
+
+.input::placeholder {
+  color: var(--text-subtle);
+}
+
+.input:hover {
+  border-color: var(--border-strong);
 }
 
 .input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  background: var(--bg-glass-hover);
 }
 
 .input:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -39,8 +60,20 @@
   font-size: 0.75rem;
   color: var(--danger);
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .errorBorder {
   border-color: var(--danger) !important;
+}
+
+.errorBorder:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+.helperText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }

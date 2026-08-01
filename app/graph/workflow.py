@@ -182,7 +182,9 @@ def embedding_generation_node(state: AgentState) -> AgentState:
 
     if jd and candidates:
         try:
-            generator = SentenceTransformerGenerator()
+            overrides = state.get("runtime_overrides") or {}
+            emb_model_name = overrides.get("embedding_model") or settings.EMBEDDING_MODEL
+            generator = SentenceTransformerGenerator(model_name=emb_model_name)
             logger.info("Generating JD text embedding vector")
             jd_embedding = generator.generate_embedding(jd.raw_content)
 
@@ -298,7 +300,9 @@ def rule_based_scoring_node(state: AgentState) -> AgentState:
     jd = state.get("job_description")
 
     if jd and candidates:
-        generator = SentenceTransformerGenerator()
+        overrides = state.get("runtime_overrides") or {}
+        emb_model_name = overrides.get("embedding_model") or settings.EMBEDDING_MODEL
+        generator = SentenceTransformerGenerator(model_name=emb_model_name)
         scorer = CandidateScorer(generator)
 
         for c in candidates:
@@ -329,7 +333,12 @@ async def llm_analysis_node(state: AgentState) -> AgentState:
 
     if jd and candidates:
         try:
-            llm = get_llm_client()
+            overrides = state.get("runtime_overrides") or {}
+            llm = get_llm_client(
+                model_name_override=overrides.get("llm_model"),
+                gemini_api_base_override=overrides.get("gemini_api_base") or overrides.get("gemini_api_base_url") or overrides.get("gemini_api_base"),
+                temperature_override=overrides.get("temperature"),
+            )
             structured_llm = llm.with_structured_output(LLMAnalysisResult)
 
             # Asynchronously query LLM for all candidates in parallel

@@ -13,6 +13,8 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     status,
+    Depends,
+    Security,
 )
 from fastapi.responses import FileResponse
 from loguru import logger
@@ -52,6 +54,9 @@ from app.models.job_description import JobDescription
 from app.models.report import Report
 from app.models.response import SuccessResponse
 from app.prompts.loader import PromptLoader
+from app.core.security import validate_llm_privilege, api_key_header
+from app.models.hiring_assistant import ChatAnswer
+from app.llm.client import get_llm_client
 
 router = APIRouter()
 
@@ -83,6 +88,10 @@ SCORING_WEIGHTS = {
 class ScreenPayload(BaseModel):
     job_description_path: str
     resumes_paths: list[str]
+    # Optional runtime overrides sent by the frontend (model selection, temps)
+    llm_model: str | None = None
+    embedding_model: str | None = None
+    temperature: float | None = None
 
 
 async def _build_executive_report() -> HiringReportResponse:
@@ -814,14 +823,24 @@ async def upload_resumes(files: list[UploadFile] = File(...)) -> SuccessResponse
 
 # Screen Resumes endpoint with WebSockets updates
 @router.post("/screen")
-async def screen_resumes(payload: ScreenPayload) -> SuccessResponse[dict[str, Any]]:
+async def screen_resumes(
+    payload: ScreenPayload,
+    header_api_key: str = Depends(validate_llm_privilege),
+) -> SuccessResponse[dict[str, Any]]:
     """Runs the LangGraph candidate screening workflow, streaming node execution via WebSocket."""
     logger.info(f"Initiating screening pipeline for JD: {payload.job_description_path} with {len(payload.resumes_paths)} candidates.")
+
+    # LLM privilege validated by dependency injection (header_api_key present)
 
     from app.graph import AgentState
     initial_state: AgentState = {
         "job_description_path": payload.job_description_path,
         "resumes_paths": payload.resumes_paths,
+        "runtime_overrides": {
+            "llm_model": payload.llm_model,
+            "embedding_model": payload.embedding_model,
+            "temperature": payload.temperature,
+        },
         "job_description_raw": None,
         "candidates_input": [],
         "job_description": None,
@@ -1008,7 +1027,11 @@ async def compare_candidates(
 
 
 @router.post("/chat", response_model=SuccessResponse[ChatResponse])
-async def recruiter_chat(payload: ChatRequest) -> SuccessResponse[ChatResponse]:
+async def recruiter_chat(
+    payload: ChatRequest,
+    use_llm: bool = False,
+    header_api_key: str = Security(api_key_header),
+) -> SuccessResponse[ChatResponse]:
     """Answers recruiter questions using only current screening session data."""
     report_id = GLOBAL_STATE.get("last_report_id")
     report = RESULTS_STORE.get(report_id) if report_id else None
@@ -1029,6 +1052,7 @@ async def recruiter_chat(payload: ChatRequest) -> SuccessResponse[ChatResponse]:
     )
 
     updated_history = final_state.get("updated_history") or []
+    # Persist rule-based graph history first
     CHAT_HISTORY_STORE[payload.session_id] = updated_history
 
     answer = final_state.get("answer")
@@ -1037,13 +1061,90 @@ async def recruiter_chat(payload: ChatRequest) -> SuccessResponse[ChatResponse]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Recruiter chat workflow completed without an answer.",
         )
+    # Optionally enhance or replace the rule-based answer using the configured LLM.
+    if use_llm:
+        try:
+            # Enforce LLM privilege (may raise HTTPException)
+            await validate_llm_privilege(header_api_key)
+
+            # Build a concise context summary for the model
+            report_summary_lines = []
+            if report and getattr(report, "rankings", None):
+                for r in report.rankings[:3]:
+                    report_summary_lines.append(f"- {r.candidate_name}: {r.score.overall_score}%")
+            candidates_summary = []
+            for cid, cand in CANDIDATE_STORE.items():
+                candidates_summary.append(f"- {cand.full_name or cid}: {', '.join(cand.skills or [])}")
+
+            prompt_parts = [
+                "You are an expert technical recruiter and hiring assistant. Use ONLY the provided information to answer the question.",
+                "Report summary:",
+                "\n".join(report_summary_lines) or "No report available.",
+                "Candidates:",
+                "\n".join(candidates_summary) or "No candidates available.",
+                "LLM analysis snippets:",
+                str(LLM_ANALYSIS_STORE or {}),
+                "Question:",
+                payload.question,
+                "Please provide a concise direct answer followed by a more detailed markdown explanation."
+            ]
+
+            prompt = "\n\n".join(prompt_parts)
+
+            # Allow runtime overrides if provided in request headers (non-breaking)
+            # For now we read no overrides here; get_llm_client will respect global settings
+            llm = get_llm_client()
+
+            # Invoke model either async or sync depending on implementation
+            if hasattr(llm, "ainvoke"):
+                llm_res = await llm.ainvoke(prompt)
+            else:
+                llm_res = llm.invoke(prompt)
+
+            # Extract text safely from potential result shapes
+            llm_text = None
+            try:
+                if isinstance(llm_res, str):
+                    llm_text = llm_res
+                elif hasattr(llm_res, "generations"):
+                    gen = llm_res.generations[0]
+                    msg = getattr(gen, "message", None)
+                    llm_text = getattr(msg, "content", str(llm_res)) if msg else str(llm_res)
+                elif hasattr(llm_res, "content"):
+                    llm_text = llm_res.content
+                else:
+                    llm_text = str(llm_res)
+            except Exception:
+                llm_text = str(llm_res)
+
+            if llm_text:
+                # Attach LLM answer as the assistant turn and persist
+                assistant_msg = ChatMessage(role="assistant", content=llm_text)
+                hist = CHAT_HISTORY_STORE.get(payload.session_id, [])
+                hist.append(ChatMessage(role="user", content=payload.question))
+                hist.append(assistant_msg)
+                CHAT_HISTORY_STORE[payload.session_id] = hist
+
+                # Prefer LLM-produced markdown if available, otherwise keep rule-based
+                answer = ChatAnswer(
+                    answer_markdown=llm_text,
+                    direct_answer=(llm_text.splitlines()[0] if llm_text else answer.direct_answer),
+                    unavailable=False,
+                    confidence=answer.confidence or 85.0,
+                )
+
+        except HTTPException:
+            # Re-raise security exceptions to preserve status
+            raise
+        except Exception as e:
+            logger.warning(f"LLM enhancement failed for chat: {e}")
 
     return SuccessResponse(
         message="Recruiter assistant response generated.",
         data=ChatResponse(
             session_id=payload.session_id,
             message=answer,
-            history=updated_history,
+            history=CHAT_HISTORY_STORE.get(payload.session_id, updated_history),
         ),
     )
 

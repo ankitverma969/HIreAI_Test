@@ -56,8 +56,16 @@ export const AnalysisProvider = ({ children }) => {
     }
   };
 
+  // Derive WebSocket URL dynamically from the stored server URL
+  const getWsUrl = () => {
+    const serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:8000';
+    // Convert http(s) → ws(s)
+    return serverUrl.replace(/^http/, 'ws') + '/ws';
+  };
+
   // Instantiate live WebSocket listener
-  const { status: wsStatus } = useWebSocket('ws://localhost:8000/ws', handleWebSocketMessage);
+  const { status: wsStatus } = useWebSocket(getWsUrl(), handleWebSocketMessage);
+
 
   const startScreening = async () => {
     if (!jdPath) {

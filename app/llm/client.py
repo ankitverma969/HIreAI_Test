@@ -118,61 +118,130 @@ class MockChatModel(BaseChatModel):
         return MockStructuredCallable(schema)
 
 
-def get_llm_client() -> BaseChatModel:
-    """Provider factory returning configured ChatModel instance or custom Mock model."""
-    model_name = settings.MODEL_NAME.lower()
+def get_llm_client(
+    model_name_override: str | None = None,
+    gemini_api_base_override: str | None = None,
+    temperature_override: float | None = None,
+) -> BaseChatModel:
+    """Provider factory returning configured ChatModel instance or custom Mock model.
 
-    # Identify mock keys to prevent API failures in offline testing
-    is_mock_key = (
-        settings.OPENAI_API_KEY == "mock-key-for-local-testing" or
-        settings.OPENAI_API_KEY == "" or
-        "mock" in settings.OPENAI_API_KEY.lower()
-    )
+    Provider selection is based on the MODEL_NAME value in Settings.
+    Mock key detection is performed per-provider to prevent the OpenAI
+    mock sentinel from accidentally suppressing a valid Gemini or Groq key.
+    """
+    # Allow runtime override of model selection and endpoint
+    model_name = (model_name_override or settings.MODEL_NAME).lower()
+    gemini_api_base = gemini_api_base_override or settings.GEMINI_API_BASE
+    temperature = temperature_override if temperature_override is not None else 0.0
+
+    # Respect feature toggle and allowed providers list
+    provider_key = None
+    if "gpt" in model_name or "openai" in model_name:
+        provider_key = "openai"
+    elif "gemini" in model_name:
+        provider_key = "gemini"
+    elif "llama" in model_name or "mixtral" in model_name or "gemma" in model_name or "groq" in model_name:
+        provider_key = "groq"
+
+    if not settings.ENABLE_LLM:
+        logger.warning("LLM features are disabled in settings.ENABLE_LLM. Returning MockChatModel.")
+        return cast(BaseChatModel, MockChatModel())
+
+    if provider_key and provider_key not in [p.lower() for p in settings.ALLOWED_LLM_PROVIDERS]:
+        logger.warning(
+            f"Requested provider '{provider_key}' is not in ALLOWED_LLM_PROVIDERS. Returning MockChatModel."
+        )
+        return cast(BaseChatModel, MockChatModel())
 
     from typing import cast
 
     from pydantic import SecretStr
 
-    if is_mock_key:
-        logger.warning(
-            f"Mock or empty OPENAI_API_KEY detected. Returning deterministic MockChatModel "
-            f"for local testing mode (requested: '{settings.MODEL_NAME}')."
-        )
-        return cast(BaseChatModel, MockChatModel())
-
-    try:
-        if "gpt" in model_name:
+    # ── Determine active provider & perform per-provider mock key check ──────
+    if "gpt" in model_name:
+        # OpenAI path
+        if settings.is_mock_key(settings.OPENAI_API_KEY):
+            logger.warning(
+                f"Mock/empty OPENAI_API_KEY detected. Returning MockChatModel "
+                f"(requested: '{settings.MODEL_NAME}')."
+            )
+            return cast(BaseChatModel, MockChatModel())
+        try:
             from langchain_openai import ChatOpenAI
             logger.info(f"Constructing ChatOpenAI instance: '{settings.MODEL_NAME}'")
             return cast(BaseChatModel, ChatOpenAI(
                 model=settings.MODEL_NAME,
                 api_key=SecretStr(settings.OPENAI_API_KEY),
-                temperature=0.0
+                temperature=0.0,
             ))
-        elif "llama" in model_name or "mixtral" in model_name or "gemma" in model_name:
+        except Exception as e:
+            logger.error(f"ChatOpenAI init failed: {e}. Falling back to MockChatModel.")
+            return cast(BaseChatModel, MockChatModel())
+
+    elif "gemini" in model_name:
+        # Google Gemini path — uses its own key, never affected by OpenAI mock
+        if settings.is_mock_key(settings.GEMINI_API_KEY):
+            logger.warning(
+                f"Mock/empty GEMINI_API_KEY detected. Returning MockChatModel "
+                f"(requested: '{settings.MODEL_NAME}')."
+            )
+            return cast(BaseChatModel, MockChatModel())
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            logger.info(f"Constructing ChatGoogleGenerativeAI: '{settings.MODEL_NAME}'")
+
+            # Build optional client kwargs for custom endpoint (GEMINI_API_BASE)
+            client_kwargs: dict = {}
+            if gemini_api_base:
+                logger.info(f"Using custom Gemini API base URL: '{gemini_api_base}'")
+                client_kwargs["client_options"] = {"api_endpoint": gemini_api_base}
+
+            return cast(BaseChatModel, ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=SecretStr(settings.GEMINI_API_KEY),
+                temperature=temperature,
+                **client_kwargs,
+            ))
+        except Exception as e:
+            logger.error(f"ChatGoogleGenerativeAI init failed: {e}. Falling back to MockChatModel.")
+            return cast(BaseChatModel, MockChatModel())
+
+    elif "llama" in model_name or "mixtral" in model_name or "gemma" in model_name:
+        # Groq path
+        if settings.is_mock_key(settings.GROQ_API_KEY):
+            logger.warning(
+                f"Mock/empty GROQ_API_KEY detected. Returning MockChatModel "
+                f"(requested: '{settings.MODEL_NAME}')."
+            )
+            return cast(BaseChatModel, MockChatModel())
+        try:
             from langchain_groq import ChatGroq
             logger.info(f"Constructing ChatGroq instance: '{settings.MODEL_NAME}'")
             return cast(BaseChatModel, ChatGroq(
-                model=settings.MODEL_NAME,
+                model=model_name,
                 api_key=SecretStr(settings.GROQ_API_KEY),
-                temperature=0.0
+                temperature=temperature,
             ))
-        elif "gemini" in model_name:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            logger.info(f"Constructing ChatGoogleGenerativeAI instance: '{settings.MODEL_NAME}'")
-            return cast(BaseChatModel, ChatGoogleGenerativeAI(
-                model=settings.MODEL_NAME,
-                google_api_key=SecretStr(settings.GEMINI_API_KEY),
-                temperature=0.0
-            ))
-        else:
+        except Exception as e:
+            logger.error(f"ChatGroq init failed: {e}. Falling back to MockChatModel.")
+            return cast(BaseChatModel, MockChatModel())
+
+    else:
+        # Default fallback → OpenAI
+        if settings.is_mock_key(settings.OPENAI_API_KEY):
+            logger.warning(
+                f"Unknown model '{settings.MODEL_NAME}' with mock OpenAI key. "
+                "Returning MockChatModel."
+            )
+            return cast(BaseChatModel, MockChatModel())
+        try:
             from langchain_openai import ChatOpenAI
             logger.info(f"Fallback constructing default ChatOpenAI: '{settings.MODEL_NAME}'")
             return cast(BaseChatModel, ChatOpenAI(
-                model=settings.MODEL_NAME,
+                model=model_name,
                 api_key=SecretStr(settings.OPENAI_API_KEY),
-                temperature=0.0
+                temperature=temperature,
             ))
-    except Exception as e:
-        logger.error(f"Failed to load configured LLM client: {str(e)}. Falling back to MockChatModel.")
-        return cast(BaseChatModel, MockChatModel())
+        except Exception as e:
+            logger.error(f"Fallback ChatOpenAI init failed: {e}. Returning MockChatModel.")
+            return cast(BaseChatModel, MockChatModel())

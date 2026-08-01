@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 190px);
+  min-height: 100vh;
 }
 
 .chatShell {
@@ -11,8 +11,10 @@
   box-shadow: var(--shadow-glass);
   display: grid;
   grid-template-rows: auto 1fr auto auto;
-  min-height: calc(100vh - 210px);
+  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 .chatHeader {
@@ -43,6 +45,10 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* Reserve space so sticky footer elements do not overlap messages */
+  --chat-input-height: 96px;
+  --chat-suggestions-height: 64px;
+  padding-bottom: calc(24px + var(--chat-input-height) + var(--chat-suggestions-height));
 }
 
 .messageRow {
@@ -161,6 +167,9 @@
   gap: 10px;
   overflow-x: auto;
   background: var(--bg-secondary);
+  position: sticky;
+  bottom: calc(var(--chat-input-height));
+  z-index: 8;
 }
 
 .suggestions button {
@@ -193,6 +202,11 @@
   padding: 16px 24px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  /* Fixed height helps keep layout stable on mobile */
+  min-height: var(--chat-input-height);
 }
 
 .inputBar textarea {
