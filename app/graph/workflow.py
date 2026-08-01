@@ -335,11 +335,20 @@ async def llm_analysis_node(state: AgentState) -> AgentState:
             # Asynchronously query LLM for all candidates in parallel
             async def run_llm_for_candidate(cand: Candidate) -> None:
                 try:
+                    experience_rows = [
+                        (
+                            f"- {exp.role or 'Role'} at {exp.company or 'Company'} "
+                            f"({exp.start_date or 'Unknown'} - {exp.end_date or 'Unknown'}): "
+                            f"{exp.responsibilities or 'No responsibilities extracted'}"
+                        )
+                        for exp in cand.experience
+                    ]
                     summary_text = (
                         f"Name: {cand.full_name}\n"
                         f"Skills Extracted: {', '.join(cand.skills)}\n"
                         f"Summary: {cand.summary or ''}\n"
                         f"Experience (Years): {cand.total_experience_years}\n"
+                        f"Professional Experience:\n{chr(10).join(experience_rows) if experience_rows else 'No professional experience extracted.'}\n"
                     )
                     prompt = PromptLoader.get_prompt(
                         "candidate_analysis",
