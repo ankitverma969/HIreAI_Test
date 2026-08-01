@@ -129,8 +129,9 @@ def get_llm_client() -> BaseChatModel:
         "mock" in settings.OPENAI_API_KEY.lower()
     )
 
-    from pydantic import SecretStr
     from typing import cast
+
+    from pydantic import SecretStr
 
     if is_mock_key:
         logger.warning(
