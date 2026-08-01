@@ -10,15 +10,27 @@ Thank you for choosing to contribute to the HIreAI Resume Screening Agent reposi
    git clone https://github.com/your-username/HIreAI_Test.git
    cd HIreAI_Test
    ```
-3. Set up the Python virtual environment and node dependencies:
-   ```bash
-   python -m venv venv
-   .\venv\Scripts\activate
-   pip install -r requirements.txt
-   
-   cd frontend
-   npm install
-   ```
+3. Set up the Python virtual environment and node dependencies (cross-platform):
+
+  Windows (PowerShell):
+  ```powershell
+  python -m venv venv
+  .\venv\Scripts\Activate.ps1
+  pip install -r requirements.txt
+
+  cd frontend
+  npm install
+  ```
+
+  macOS / Linux (bash):
+  ```bash
+  python -m venv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+
+  cd frontend
+  npm install
+  ```
 
 ## Development Guidelines
 

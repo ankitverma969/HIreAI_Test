@@ -153,18 +153,36 @@ HIreAI_Test/
    git clone https://github.com/ankitverma969/HIreAI_Test.git
    cd HIreAI_Test
    ```
-2. Build virtual environment and install packages:
+2. Build virtual environment and install packages (cross-platform)
+
+   Windows (PowerShell):
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   python -m spacy download en_core_web_sm
+   ```
+
+   macOS / Linux (bash/zsh):
    ```bash
    python -m venv venv
-   .\venv\Scripts\activate
+   source venv/bin/activate
    pip install -r requirements.txt
    python -m spacy download en_core_web_sm
    ```
 3. Establish environmental configurations:
+
+   Unix / macOS:
    ```bash
    cp .env.example .env
    ```
-   Add your keys to `.env` (e.g. `GEMINI_API_KEY=AIzaSy...`).
+
+   Windows (PowerShell):
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   After copying, add your keys to `.env` (e.g. `GEMINI_API_KEY=...`).
 
 4. Launch the FastAPI server:
    ```bash
