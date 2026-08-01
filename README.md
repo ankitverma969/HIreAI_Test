@@ -1,206 +1,262 @@
-# AI Resume Screening Agent - Foundation & Architecture
+# HIreAI Resume Screening Agent
 
-Enterprise-grade, modular, and type-safe Clean Architecture codebase foundation for a Resume Screening AI Agent. Built following modern software engineering patterns using python 3.12+, FastAPI, Streamlit, LangGraph, and Pydantic v2.
+🤖 **An Enterprise-Grade AI-Powered Resume Screening & Parsing Agent utilizing LangGraph, FastAPI, and React.**
+
+[![Continuous Integration](https://github.com/ankitverma969/HIreAI_Test/actions/workflows/ci.yml/badge.svg)](https://github.com/ankitverma969/HIreAI_Test/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![React 19](https://img.shields.io/badge/react-19.0-blue.svg)](https://react.dev/)
 
 ---
 
-## Project Overview
+## 1. Project Overview & Problem Statement
 
-This repository establishes the foundational blueprint and interfaces for an automated candidate recruitment pipeline. The architecture defines layers separating core business entities, agent state traversal graph, service orchestration, document parsing pipelines, and presentation frontends.
+### The Problem
+Recruiting teams at high-growth enterprises are inundated with thousands of applications for open roles. Manual resume screening is slow, highly prone to cognitive bias, and difficult to coordinate. Standard Applicant Tracking Systems (ATS) rely on simple keyword-matching, missing qualified candidates with non-standard keywords but matching experience.
+
+### The Solution
+**HIreAI Agent** is a professional AI screening copilot. It parses unstructured resume documents (PDF, DOCX, TXT) and target job descriptions into validated structured objects, processes semantic similarities, computes deterministic rule-based weighted scores, and uses LangGraph workflows to generate qualitative reasoning, structured hiring recommendations, and personalized interview questions.
 
 ---
 
-## Architecture Diagram
+## 2. Technology Stack
 
-The project is structured under **Clean Architecture** patterns, separating concerns across distinct concentric circles:
+- **Backend**: Python 3.11, FastAPI, Uvicorn, Pydantic v2
+- **NLP & Embeddings**: spaCy (`en_core_web_sm`), SentenceTransformers (`all-MiniLM-L6-v2`)
+- **Agent Framework**: LangGraph, LangChain, Google Generative AI (Gemini 1.5)
+- **Frontend**: React 19, Vite, Recharts, Axios, Context API, Vanilla CSS Modules
+- **Quality & Static Analysis**: Ruff, Black, MyPy, Pre-commit
+- **Testing**: pytest (Backend), Vitest + React Testing Library (Frontend)
+- **Containerization**: Docker, Docker Compose
+
+---
+
+## 3. System Architecture & Diagrams
+
+### System Architecture Overview
+The system follows Clean Architecture, separation of concerns, and unidirectional data flow.
 
 ```mermaid
 graph TD
-    %% Presentation Layer
-    subgraph Presentation ["Presentation Layer"]
-        StreamlitUI[Streamlit Dashboard App]
-        FastAPIRouter[FastAPI Endpoint Router]
-    end
+    User([HR Recruiter]) -->|Upload Files / Configure| FE[React Vite Frontend]
+    FE -->|WebSocket Events / API Calls| BE[FastAPI App Gateway]
+    BE -->|Triggers Node Scans| LG[LangGraph Execution Graph]
+    LG -->|Invokes Models| Gemini[Google Gemini LLM]
+    LG -->|Generates Embeddings| ST[SentenceTransformer Vectorizer]
+    BE -->|Writes Outputs| Exporter[Report Exporter Engine]
+    Exporter -->|Generates Downloads| Report[CSV / JSON / Markdown]
+```
 
-    %% Application Layer
-    subgraph Application ["Application Layer"]
-        AgentService[Agent Orchestration Service]
-        WorkflowGraph[LangGraph State Workflow]
-        State[Agent State Schema]
-    end
+### LangGraph Workflow Pipeline
+The agent's decision logic is orchestrated as a deterministic state graph:
 
-    %% Domain Layer
-    subgraph Domain ["Domain Layer & Entities"]
-        CandidateEntity[Candidate Model]
-        JDEntity[JobDescription Model]
-        ScoreEntity[Score Model]
-        ReportEntity[Report Model]
-        APIResponse[Response Wrappers]
-    end
+```mermaid
+graph LR
+    START([START]) --> Validate[validate_input]
+    Validate --> Parse[parse_jd]
+    Parse --> Load[load_resumes]
+    Load --> Embed[embedding_generation]
+    Embed --> Sim[similarity_calculation]
+    Sim --> Score[score_generation]
+    Score --> Reason[reasoning_generation]
+    Reason --> Rec[recommendation]
+    Rec --> Rank[ranking]
+    Rank --> Report[report_generation]
+    Report --> END([END])
+```
 
-    %% Infrastructure Layer
-    subgraph Infrastructure ["Infrastructure Layer (Adapters & Tools)"]
-        ParserClient[Document Parsers]
-        ExtractorClient[LLM Structured Extractors]
-        EmbeddingsGen[Sentence-Transformers Embeddings]
-        LLMClient[OpenAI/Groq Clients]
-        CSVExporter[Report Exporters]
-        Repo[File Storage / Repositories]
-    end
-
-    %% Dependencies and flow of control
-    StreamlitUI -.->|HTTP JSON Request| FastAPIRouter
-    FastAPIRouter -->|Calls| AgentService
-    AgentService -->|Triggers| WorkflowGraph
-    WorkflowGraph -->|Updates| State
-    WorkflowGraph -.->|Executes Nodes via| ExtractorClient
-    WorkflowGraph -.->|Invokes| ParserClient
-    WorkflowGraph -.->|Invokes| EmbeddingsGen
-    WorkflowGraph -.->|Invokes| LLMClient
-    WorkflowGraph -.->|Invokes| CSVExporter
+### API Flow Sequence
+```mermaid
+sequenceDiagram
+    autonumber
+    actor HR as HR Recruiter
+    participant FE as React Web UI
+    participant BE as FastAPI Gateway
+    participant WS as WebSocket Handler
+    participant LG as LangGraph Pipeline
     
-    %% Entity Usage
-    AgentService -.->|Returns| ReportEntity
-    CandidateEntity -.->|Data representation| State
-    JDEntity -.->|Data representation| State
-    ScoreEntity -.->|Data representation| State
+    HR->>FE: Upload JD & Resumes
+    FE->>BE: POST /job-description/upload & POST /resumes/upload
+    BE-->>FE: Returns saved file paths
+    HR->>FE: Click "Start AI Screening"
+    FE->>BE: POST /screen
+    FE->>WS: Connects ws://localhost:8000/ws
+    BE->>LG: Execute Graph Pipeline
+    loop Process Node States
+        LG->>BE: Stream active node events
+        BE->>WS: Broadcast progress events (validate_input, parse_jd, etc.)
+        WS-->>FE: Update progress bars and active pipeline stage
+    end
+    LG-->>BE: Returns final evaluations report
+    BE-->>FE: Returns successful completion response
+    FE->>BE: GET /results
+    BE-->>FE: Returns candidate rankings list
+    FE->>HR: Render ranked candidates table & Recharts dashboards
 ```
 
 ---
 
-## Folder Structure
+## 4. Repository Directory Structure
 
-```
-resume-screening-agent/
-│
-├── app/
-│   ├── api/                      # Presentation: API routes, schemas, request dependencies
-│   │   ├── dependencies.py
-│   │   └── router.py
-│   │
-│   ├── core/                     # Infrastructure: Central configuration, logging, exceptions
-│   │   ├── config.py
-│   │   ├── constants.py
-│   │   ├── exceptions.py
-│   │   ├── logging.py
-│   │   └── security.py
-│   │
-│   ├── graph/                    # Application: LangGraph State definition & graph workflow
-│   │   ├── state.py
-│   │   └── workflow.py
-│   │
-│   ├── models/                   # Domain: Pydantic v2 data entities and schemas
-│   │   ├── candidate.py
-│   │   ├── job_description.py
-│   │   ├── report.py
-│   │   ├── response.py
-│   │   └── score.py
-│   │
-│   # --- Infrastructure Layer Interfaces & Boundaries ---
-│   ├── parser/                   # Raw document readers (PDF, Docx, Txt)
-│   ├── extractor/                # AI-driven profile metadata structure extractors
-│   ├── scorer/                   # Similarity & score mathematical aggregators
-│   ├── embeddings/               # Vector representation translators
-│   ├── llm/                      # Upstream Large Language Model connector clients
-│   ├── prompts/                  # Unified instruction template loaders
-│   ├── exporters/                # Disk persistence wrappers (CSV, JSON)
-│   ├── repositories/             # Access repository data abstraction boundary
-│   ├── services/                 # Workflow service orchestrators
-│   └── utils/                    # Shared validation helpers
-│
-├── streamlit_app/                # Presentation: Streamlit Dashboard UI Code
-│   └── app.py
-│
-├── data/                         # Persistent input volumes (JDs, Resumes)
-├── outputs/                      # Generated evaluation files (CSV, JSON, Reports)
-├── tests/                        # Suite tests covering APIs, Parsers, Scorers, Graphs
-├── docs/                         # Extended documentation
-│
-├── .env                          # Local environment settings credentials
-├── .env.example                  # Environment configuration template
-├── .gitignore                    # Standard development filter definitions
-├── requirements.txt              # Application library versions descriptors
-├── pyproject.toml                # Static tool analyzer configs (Ruff, Mypy, Black)
-├── main.py                       # FastAPI application factory entrypoint
-└── README.md                     # Documentation readme
+```directory
+HIreAI_Test/
+├── .github/                   # GitHub templates and workflows
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   ├── workflows/
+│   │   └── ci.yml             # Github Actions CI pipeline
+│   └── PULL_REQUEST_TEMPLATE.md
+├── app/                       # Core python backend codebase
+│   ├── api/                   # Router and controllers
+│   ├── core/                  # Configurations, logging, and exceptions
+│   ├── extractor/             # Rule-based NLP entity extractors
+│   ├── graph/                 # LangGraph pipeline workflow definition
+│   ├── llm/                   # LLM client wrappers
+│   ├── models/                # Pydantic structured schemas
+│   ├── parser/                # File text parsers (PDF, DOCX, TXT)
+│   └── services/              # Core business services
+├── data/                      # Ingestion uploads and outputs storage
+│   ├── samples/               # Mock resumes and job description sample
+│   └── uploads/
+├── docs/                      # Screenshots and diagrams documentation
+├── frontend/                  # React Vite workspace
+│   ├── src/
+│   │   ├── __tests__/         # Vitest component & hook tests
+│   │   ├── components/        # Reusable UI widgets
+│   │   ├── context/           # Global providers (Theme, Analysis, etc.)
+│   │   ├── hooks/             # Custom utility hooks
+│   │   ├── layout/            # Sidebar & Top nav templates
+│   │   ├── pages/             # Route page containers
+│   │   └── services/          # API network adapters
+│   ├── Dockerfile
+│   └── nginx.conf             # Production Nginx SPA proxy
+├── tests/                     # Pytest backend test suite
+├── Dockerfile                 # Backend deployment container
+├── docker-compose.yml         # One-command startup config
+├── pyproject.toml             # Ruff, Black, and MyPy configurations
+└── requirements.txt           # Backend python dependencies list
 ```
 
 ---
 
-## Technology Stack
+## 5. Local Onboarding & Installation
 
-- **Runtime**: Python 3.12+
-- **API Framework**: FastAPI
-- **Web Interface**: Streamlit
-- **Agent Framework**: LangGraph
-- **Vector Embeddings**: Sentence-Transformers
-- **Upstream GenAI**: LangChain (OpenAI & Groq wrappers)
-- **Data Structuring**: Pydantic v2
-- **Testing & Verification**: Pytest, Ruff, Mypy, Black
+### Prerequisites
+- Python 3.11
+- Node.js v20 (with npm)
+- Gemini API Key (or OpenAI/Groq keys)
 
----
-
-## Installation
-
-1. **Clone project directory and navigate to root**:
+### Backend Setup
+1. Clone the repository and navigate to root:
    ```bash
-   cd resume-screening-agent
+   git clone https://github.com/ankitverma969/HIreAI_Test.git
+   cd HIreAI_Test
    ```
-
-2. **Create and activate a python virtual environment**:
+2. Build virtual environment and install packages:
    ```bash
    python -m venv venv
-   # Windows (Powershell):
-   .\venv\Scripts\Activate.ps1
-   # macOS/Linux:
-   source venv/bin/activate
-   ```
-
-3. **Install application dependencies**:
-   ```bash
+   .\venv\Scripts\activate
    pip install -r requirements.txt
+   python -m spacy download en_core_web_sm
    ```
+3. Establish environmental configurations:
+   ```bash
+   cp .env.example .env
+   ```
+   Add your keys to `.env` (e.g. `GEMINI_API_KEY=AIzaSy...`).
+
+4. Launch the FastAPI server:
+   ```bash
+   python main.py
+   ```
+   Server launches at `http://localhost:8000`. OpenAPI endpoints docs at `http://localhost:8000/docs`.
+
+### Frontend Setup
+1. Open a new terminal inside the `frontend` folder:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   UI launches at `http://localhost:5173`.
 
 ---
 
-## Environment Variables
+## 6. Docker Deployment (One-Command Startup)
 
-Copy the template file to set up environment credentials:
+Launch both the backend server and React interface containerized:
+
 ```bash
-cp .env.example .env
+docker compose up --build
 ```
-Ensure you update the API tokens inside `.env` before running:
-- `OPENAI_API_KEY`: Authentication key for OpenAI completion APIs.
-- `GROQ_API_KEY`: Authentication key for Groq completion APIs.
-- `LOG_LEVEL`: Output detail level (DEBUG, INFO, WARNING, ERROR).
+- **React Frontend**: served at `http://localhost`
+- **FastAPI Backend**: served at `http://localhost:8000`
 
 ---
 
-## Running Backend API
+## 7. API Reference Table
 
-To run the FastAPI server locally with auto-reload:
+| Method | Endpoint | Description | Payload / Response |
+| --- | --- | --- | --- |
+| `POST` | `/job-description/upload` | Upload Job Description (PDF/DOCX/TXT) | `multipart/form-data` -> `SuccessResponse` |
+| `POST` | `/resumes/upload` | Upload Candidate Resumes (PDF/DOCX/TXT) | `multipart/form-data` -> `SuccessResponse` |
+| `POST` | `/screen` | Trigger the LangGraph screening pipeline | Returns report ID & parsed candidates count |
+| `GET` | `/results` | Get the latest evaluation rankings | Returns rankings data array |
+| `GET` | `/candidate/{candidate_id}` | Fetch detailed candidate profile & AI reviews | Returns structured bio and scores breakdown |
+| `GET` | `/download/csv` | Download flat CSV report | Returns file attachment |
+| `GET` | `/download/json` | Download structured JSON report | Returns file attachment |
+| `GET` | `/download/report` | Download Markdown summary report | Returns file attachment |
+| `WS` | `/ws` | WebSocket pipeline progress node socket | Streams node completion updates |
+
+---
+
+## 8. Sample Workflows & Decisions Results
+
+Our workspace contains realistic sample resources located in [E:\Agent\data\samples\resumes](file:///E:/Agent/data/samples/resumes) to showcase the pipeline's capabilities:
+
+- **Strong Hire**: `resume_1_strong_hire_senior.txt` (8+ years experience, expert match in Python, FastAPI, Docker, and React).
+- **Hire**: `resume_2_hire_mid.txt` (4 years experience, strong in Python/FastAPI backend).
+- **Consider**: `resume_4_consider_junior.txt` (1 year junior developer, matches fundamental Python).
+- **Review**: `resume_6_review_qa.txt` (QA automation focused, requires code manual audits).
+- **Reject**: `resume_8_reject_unrelated.txt` (Unrelated graphic design profile, missing technical stack).
+
+---
+
+## 9. Testing & Quality Standards
+
+### Running Backend Tests
 ```bash
-uvicorn main:app --reload
+python -m pytest tests/
 ```
-Once started:
-- Access interactive documentation (Swagger UI) at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- Verify system version at: [http://127.0.0.1:8000/version](http://127.0.0.1:8000/version)
-
----
-
-## Running Frontend UI
-
-To run the Streamlit dashboard locally:
+### Running Frontend Tests
 ```bash
-streamlit run streamlit_app/app.py
+cd frontend
+npm run test
 ```
-This opens the frontend client interface at [http://localhost:8501](http://localhost:8501).
+
+### Static Analysis Checks
+```bash
+ruff check .
+black --check .
+mypy app main.py
+```
 
 ---
 
-## Future Roadmap
+## 10. Screenshots & Walkthroughs
 
-- Integrate LLM adapters for parsing structured data from unstructured formats.
-- Wire up local/cloud embedding vectors and similarity distance computation node.
-- Standardize PDF/Docx loading interfaces using `pdfplumber` and `pymupdf`.
-- Develop detailed unit & integration test suites validating candidate state transformations in graph traversal.
+Please refer to the screenshots folder at `docs/screenshots/` for UI illustrations.
+
+* **Upload Screen**: Drag-and-drop file ingestion zone.
+* **Pipeline Progress Screen**: Real-time Node updates.
+* **Rankings Board**: Glassmorphic, sortable candidate rankings dashboard.
+* **Analytics Panel**: Charts demonstrating matching parameters.
+
+---
+
+## License & Contribution Guidelines
+This project is licensed under the [MIT License](LICENSE). Contributions must follow the guidelines detailed in [CONTRIBUTING.md](CONTRIBUTING.md).
