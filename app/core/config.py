@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     # API Keys
     OPENAI_API_KEY: str = Field(default="mock-key-for-local-testing")
     GROQ_API_KEY: str = Field(default="mock-key-for-local-testing")
+    GEMINI_API_KEY: str = Field(default="mock-key-for-local-testing")
 
     # Model Configurations
     MODEL_NAME: str = Field(default="gpt-4o-mini")

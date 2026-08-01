@@ -5,6 +5,7 @@ langchain>=0.1.12
 langgraph>=0.0.30
 langchain-openai>=0.0.8
 langchain-groq>=0.0.1
+langchain-google-genai>=1.0.1
 sentence-transformers>=2.5.1
 scikit-learn>=1.4.1
 spacy>=3.7.4

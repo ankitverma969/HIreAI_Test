@@ -64,10 +64,20 @@ openai_key = st.sidebar.text_input(
     "OpenAI API Key", type="password", placeholder="sk-..."
 )
 groq_key = st.sidebar.text_input("Groq API Key", type="password", placeholder="gsk-...")
+gemini_key = st.sidebar.text_input(
+    "Gemini API Key", type="password", placeholder="AIzaSy..."
+)
 
 model_option = st.sidebar.selectbox(
     "LLM Architecture Model",
-    ["gpt-4o-mini", "gpt-4o", "llama-3-70b-groq", "mixtral-8x7b-groq"],
+    [
+        "gpt-4o-mini",
+        "gpt-4o",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "llama-3-70b-groq",
+        "mixtral-8x7b-groq",
+    ],
 )
 
 embedding_option = st.sidebar.selectbox(
