@@ -12,7 +12,8 @@ import {
   DownloadButton,
   Loader,
   EmptyState,
-  ErrorState
+  ErrorState,
+  Button,
 } from '../components';
 import styles from './Results.module.css';
 
