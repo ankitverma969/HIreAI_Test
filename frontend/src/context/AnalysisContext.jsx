@@ -58,9 +58,24 @@ export const AnalysisProvider = ({ children }) => {
 
   // Derive WebSocket URL dynamically from the stored server URL
   const getWsUrl = () => {
-    const serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:8000';
-    // Convert http(s) → ws(s)
-    return serverUrl.replace(/^http/, 'ws') + '/ws';
+    const raw = localStorage.getItem('serverUrl');
+    // Prefer an explicit serverUrl stored in localStorage, otherwise fall back to the current origin with port 8000
+    let serverUrl = raw && raw.trim().length > 0 ? raw.trim() : `${window.location.protocol}//${window.location.hostname}:8000`;
+
+    // If the stored value already uses ws/wss, ensure it ends with /ws
+    if (/^wss?:\/\//i.test(serverUrl)) {
+      return serverUrl.replace(/\/$/, '') + '/ws';
+    }
+
+    // If protocol is http or https, convert to ws or wss depending on page protocol
+    if (/^https?:\/\//i.test(serverUrl)) {
+      const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      return serverUrl.replace(/^https?:/i, wsProto + ':') .replace(/\/$/, '') + '/ws';
+    }
+
+    // Otherwise assume hostname (with optional port) and build ws URL
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${proto}://${serverUrl.replace(/\/$/, '')}/ws`;
   };
 
   // Instantiate live WebSocket listener
